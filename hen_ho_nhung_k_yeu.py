@@ -1,47 +1,42 @@
+#Hẹn hò nhưng không yêu 
+#Mọi người sài nhớ cre nha !! 
+#code by Tranchinnn
+#code mang tính chia sẻ giải trí không toxic
 import sys
 import os
 import time
 import threading
 
-# --- PHẦN SỬA LỖI QUAN TRỌNG ---
 def play_music(filename="music.mp3"):
     """
-    Phát nhạc nền với đường dẫn tuyệt đối để tránh lỗi không tìm thấy file.
+    Phát nhạc nền liên tục bằng pygame.
+    Nếu pygame chưa cài,sẽ tự động cài nhé.
     """
-    # 1. Xác định đường dẫn chính xác của file nhạc (nằm cùng chỗ với file code)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    music_path = os.path.join(script_dir, filename)
+    import contextlib, io
 
-    print(f"--> Đang tìm file nhạc tại: {music_path}")
-
-    # 2. Kiểm tra thư viện pygame
     try:
-        import pygame
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            import pygame
     except ImportError:
-        print("--> Chưa có pygame, đang cài đặt...")
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pygame"])
-        import pygame
+        try:
+            import subprocess
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "pygame"])
+                import pygame
+        except Exception:
+            return  
 
-    # 3. Kiểm tra file tồn tại
-    if not os.path.exists(music_path):
-        print(f"\n[LỖI] Không tìm thấy file nhạc: {filename}")
-        print(f"Hãy đảm bảo file '{filename}' nằm cùng thư mục với file code này!\n")
+    if not os.path.exists(filename):
         return
 
-    # 4. Phát nhạc
     try:
-        # Tắt bớt thông báo của pygame cho gọn
-        os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-        
-        pygame.mixer.init()
-        pygame.mixer.music.load(music_path)
-        pygame.mixer.music.play(-1) # -1 là lặp vô tận
-        print("--> Đã phát nhạc thành công!\n")
-    except Exception as e:
-        print(f"\n[LỖI ÂM THANH] Không thể phát nhạc: {e}\n")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            pygame.mixer.init()
+            pygame.mixer.music.load(filename)
+            pygame.mixer.music.play(-1)  
+    except Exception:
+        return
 
-# --- KẾT THÚC PHẦN SỬA LỖI ---
 
 class Mau:
     RESET = '\033[0m'
@@ -49,11 +44,15 @@ class Mau:
     DEN = (50, 50, 50)
 
 def xoa_man_hinh():
+    """Xóa màn hình terminal"""
     os.system('cls' if os.name == 'nt' else 'clear')
+
+
 
 def hieu_ung_tung_tu_ro_dan(line, char_speed=0.08, word_delay=0.3, fade_steps=6):
     words = line.split()
     displayed_line = ""
+
     for word in words:
         for step in range(1, fade_steps + 1):
             intensity = int(Mau.TRANG[0] * (fade_steps - step + 1) / fade_steps)
@@ -65,6 +64,7 @@ def hieu_ung_tung_tu_ro_dan(line, char_speed=0.08, word_delay=0.3, fade_steps=6)
         sys.stdout.write(f"\r{displayed_line}")
         sys.stdout.flush()
         time.sleep(word_delay)
+
     print()
     return displayed_line
 
@@ -77,7 +77,6 @@ def hieu_ung_go_chu(line, char_speed=0.05):
         time.sleep(char_speed)
     print()
     return current_line
-
 def hieu_ung_laser(line, step_delay=0.03, laser_width=3):
     length = len(line)
     for pos in range(length + laser_width):
@@ -97,9 +96,6 @@ def hieu_ung_laser(line, step_delay=0.03, laser_width=3):
     return line
 
 def show_lyrics():
-    # Chờ một chút để nhạc kịp load trước khi chạy chữ
-    time.sleep(1)
-    
     lyrics_list = [
         "Con tốt mang tên em mà anh lựa chọn bước đi.",
         "Hẹn hò nhưng không yêu, chắc em là kẻ mất trí",
@@ -115,10 +111,9 @@ def show_lyrics():
     ]
 
     char_speed_list = [0.08, 0.07, 0.07, 0.07, 0.06, 0.01, 0.01, 0.01, 0.01, 0.056, 0.067]
-    effect_order    = [2, 1, 1, 2, 2, 0, 0, 0, 0, 2, 2] 
+    effect_order    = [2, 1, 1, 2, 2, 0, 0, 0, 0, 2, 2] # các hiệu ứng từ (0,1,2)
 
     xoa_man_hinh()
-    print("\n") # Xuống dòng cho đẹp
     for idx, line in enumerate(lyrics_list):
         effect_type = effect_order[idx]
         speed = char_speed_list[idx]
@@ -129,12 +124,10 @@ def show_lyrics():
         else:
             hieu_ung_laser(line, step_delay=speed)
 
-    time.sleep(2) # Dừng lại chút cuối cùng
+    time.sleep(0.5)
+
 
 if __name__ == "__main__":
-    # Chạy nhạc ở luồng riêng
     music_thread = threading.Thread(target=play_music, args=("music.mp3",), daemon=True)
     music_thread.start()
-    
-    # Chạy lời bài hát
     show_lyrics()
